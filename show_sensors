@@ -1,0 +1,114 @@
+#!/bin/bash
+#
+# Copyright 2023 kla-sch@gmx.de
+#
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation files
+# (the "Software"), to deal in the Software without restriction,
+# including without limitation the rights to use, copy, modify, merge,
+# publish, distribute, sublicense, and/or sell copies of the Software,
+# and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+# BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+# ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+declare -A sens_temp sens_temppt sens_humid sens_updtime
+
+. sensor_config
+
+if [ "${sensors[XX:XX:XX:XX:XX:XX]}" != "" -o \
+     "${sensors[YY:YY:YY:YY:YY:YY]}" != "" ]
+then
+    echo please edit \'sensor_config\' to configure your sensors
+    exit 1
+fi
+
+if [ "${#sensors[@]}" -eq 0 ]
+then
+    echo no sensors configured. please edit your \'sensor_config\'
+    exit 1
+fi
+
+
+sformat="%-20s %8s %8s %-19s\n"
+nformat="%-20s %4d.%1d°C %7d%% %19s\n"
+
+function display() {
+    clear
+    printf "$sformat" "Name" "Temp" "Humidity" "Last Update"
+    printf "$sformat" "====================" "========" "========" \
+               "==================="
+    for mac in ${!sensors[@]}
+    do
+        if [ "${sens_updtime[$mac]}" != "" ]
+        then
+            printf "$nformat" \
+                   "${sensors[$mac]}" \
+                   "${sens_temp[$mac]}" \
+                   "${sens_temppt[$mac]}" \
+                   "${sens_humid[$mac]}" \
+                   "${sens_updtime[$mac]}"
+        else
+            printf "$sformat" \
+                   "${sensors[$mac]}" \
+                   "no data" \
+                   "no data" \
+                   "-"
+        fi
+    done
+}
+
+
+display
+
+data_mac=
+stdbuf -oL bluetoothctl scan on |
+while read p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 remains
+do
+    if [ "$data_mac" != "" ]
+    then
+        # data line
+        tstamp=$(date +"%Y-%m-%d %H:%M:%S")
+        temppt=$(( 0x$p9 & 0x0F ))    # temperature after decimal point
+        temp=$(( 0x$p10 & 0x7F ))     # temperature before decimal point
+        isPos=$(( 0x$p10 & 0x80 ))    # 128=positive / 0=negative
+
+        if [ $isPos -eq 0 ]
+        then
+            temp=$((-$temp))
+        fi
+
+        humid=$(( 0x$p11 & 0x7F )) # humidity%
+
+        # save values
+        sens_updtime[$data_mac]=$tstamp
+        sens_temp[$data_mac]=$temp
+        sens_temppt[$data_mac]=$temppt
+        sens_humid[$data_mac]=$humid
+
+        display
+
+        data_mac="" # search next
+    elif [ "$p3" != "" ]
+    then
+        if [ "${sensors[$p3]}" != "" ]
+        then
+            # found a known sensor
+            if [ "$p4" == "ManufacturerData" -a "$p5" == "Value:" ]
+            then
+                # next line ist sensor data
+                data_mac=$p3
+            fi
+        fi
+    fi;
+done
