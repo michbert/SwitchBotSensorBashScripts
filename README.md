@@ -83,22 +83,25 @@ received from the sensors.  Shortly after the start, the output looks
 like this:
 
 ```
-Name                     Temp Humidity Last Update
-==================== ======== ======== ===================
-room sensor           no data  no data -
-outdoor sensor        no data  no data -
+Name                     Temp Humidity Last Update         Signal Quality
+==================== ======== ======== =================== ==============
+room sensor           no data  no data -                   [        ] -
+outdoor sensor        no data  no data -                   [        ] -
 ```
 
 After a while the tool has retrieved some data and shows the last
 received values from the sensors:
 
 ```
-Name                     Temp Humidity Last Update
-==================== ======== ======== ===================
-room sensor            23.2°C      51% 2023-07-09 08:43:29
-outdoor sensor         25.0°C      51% 2023-07-09 08:40:33
+Name                     Temp Humidity Last Update         Signal Quality
+==================== ======== ======== =================== ==============
+room sensor            23.2°C      51% 2023-07-09 08:43:29 [******  ] -50
+outdoor sensor         25.0°C      51% 2023-07-09 08:40:33 [***     ] -86
 ```
 
-The last column shows when the last data was received. For sensors
-that are further away, it can take me more than an hour to receive
-data.
+The column "Last Update" shows when the last data was received. For
+sensors that are further away, it can take me more than an hour to
+receive data. The last column shows the signal quality with the RSSI
+value.
+
+You have to use `Ctrl-C` to exit the program.

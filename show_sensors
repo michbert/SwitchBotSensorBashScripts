@@ -22,7 +22,7 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-declare -A sens_temp sens_temppt sens_humid sens_updtime
+declare -A sens_temp sens_temppt sens_humid sens_updtime sens_rssi
 
 . sensor_config
 
@@ -39,17 +39,24 @@ then
     exit 1
 fi
 
+sformat="%-20s %8s %8s %-19s %-14s\n"
+nformat="%-20s %4d.%1d°C %7d%% %19s %-14s\n"
 
-sformat="%-20s %8s %8s %-19s\n"
-nformat="%-20s %4d.%1d°C %7d%% %19s\n"
+# "Signal Quality"
+#  [********] -95
 
 function display() {
     clear
-    printf "$sformat" "Name" "Temp" "Humidity" "Last Update"
+    printf "$sformat" "Name" "Temp" "Humidity" "Last Update" "Signal Quality"
     printf "$sformat" "====================" "========" "========" \
-               "==================="
+           "===================" "=============="
     for mac in ${!sensors[@]}
     do
+        if [ "${sens_rssi[$mac]}" = "" ]
+        then
+            sens_rssi[$mac]="[        ] -"
+        fi
+
         if [ "${sens_updtime[$mac]}" != "" ]
         then
             printf "$nformat" \
@@ -57,13 +64,15 @@ function display() {
                    "${sens_temp[$mac]}" \
                    "${sens_temppt[$mac]}" \
                    "${sens_humid[$mac]}" \
-                   "${sens_updtime[$mac]}"
+                   "${sens_updtime[$mac]}" \
+                   "${sens_rssi[$mac]}"
         else
             printf "$sformat" \
                    "${sensors[$mac]}" \
                    "no data" \
                    "no data" \
-                   "-"
+                   "-" \
+                   "${sens_rssi[$mac]}"
         fi
     done
 }
@@ -99,7 +108,7 @@ do
         display
 
         data_mac="" # search next
-    elif [ "$p3" != "" ]
+    elif [ "$p2" = "Device" ]
     then
         if [ "${sensors[$p3]}" != "" ]
         then
@@ -108,7 +117,25 @@ do
             then
                 # next line ist sensor data
                 data_mac=$p3
-            fi
-        fi
-    fi;
+            elif [ "$p4" = "RSSI:" ]
+            then
+                # signal quality (RSSI value)
+                n_stars=$(( 8+($p5+30)/10 ))
+                n_space=$(( 8-$n_stars ))
+                rssi_stars=
+                while [ $n_stars -gt 0 ]
+                do
+                    n_stars=$(($n_stars-1))
+                    rssi_stars="${rssi_stars}*"
+                done
+                while [ $n_space -gt 0 ]
+                do
+                    n_space=$(($n_space-1))
+                    rssi_stars="${rssi_stars} "
+                done
+                sens_rssi[$p3]="[${rssi_stars}] $p5"
+                display
+            fi # RSSI
+        fi # sensor
+    fi # Device
 done
