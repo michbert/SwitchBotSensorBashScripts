@@ -33,15 +33,22 @@ do
     then
         if [ "${sensors[$p3]}" = "" ]
         then
+            printf "%s\r" "Test $p3 ..."
+            bluetoothctl connect $p3 > /dev/null
             name=$(
                 bluetoothctl info $p3 |
                     grep "Name:" |
                     sed 's/^\tName:[ ]*\([^ ]*\)/\1/g')
-            if [ "$name" = "WoSensorTH" -o "$name" = "WoIOSensorTH" ]
+            if [ "$name" = "WoSensorTH" -o \
+                 "$name" = "WoIOSensorTH" -o \
+                 "$name" = "WoSensorTHP" ]
             then
-                echo Found $name: $p3
+                printf "%s\n" "Found $name: $p3"
+                sensors["$p3"]="checked"
+            elif [ "$name" != "" ]
+            then
+                sensors["$p3"]="checked"
             fi
-            sensors["$p3"]="found"
         fi
     fi
 done

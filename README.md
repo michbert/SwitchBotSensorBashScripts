@@ -26,10 +26,19 @@ $ bash scan_sensors
 Scanning for sensors. Use Ctrl-C to exit ...
 Found WoSensorTH: XX:XX:XX:XX:XX:XX
 Found WoIOSensorTH: YY:YY:YY:YY:YY:YY
-
+Found WoSensorTHP: ZZ:ZZ:ZZ:ZZ:ZZ:ZZ
+Test AA:AA:AA:AA:AA:AA ...
 ```
 
+The result shows the type of device and the MAC address after a while.
+
 You need these MAC values to configure the `sensor_config` file.
+
+| Type         | Description                                |
+| ------------ | ------------------------------------------ |
+| WoSensorTH   | SwitchBot Meter                            |
+| WoSensorTHP  | SwitchBot Meter Plus                       |
+| WoIOSensorTH | SwitchBot Indoor/Outdoor Thermo-Hygrometer |
 
 ## Configure your sensors
 
@@ -37,8 +46,6 @@ The file `sensor_config` contains the sensors configurations. Edit the
 file to insert the MAC addresses of your devices. Make sure you have
 either modified or removed the samples in this file. Otherwise, the
 tools will prompt you to edit the file.
-
-## ``
 
 ## `log_sensors`
 
