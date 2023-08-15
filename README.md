@@ -1,3 +1,6 @@
+# My account will be closed soon.
+Microsoft requires 2FA. I will never use that. So this accout will be closed soon. Sorry about that.
+
 # Simple bash scripts to read temperature data from SwitchBot devices
 
 This is a collection of linux bash shell scripts for reading
